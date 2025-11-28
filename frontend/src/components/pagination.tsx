@@ -1,16 +1,6 @@
-import { Button } from "./ui/button";
-
-const ChevronLeft = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-  </svg>
-);
-
-const ChevronRight = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-  </svg>
-);
+import { useMemo } from "react";
+import { Button } from "@/components/ui/Button";
+import { Chevron } from "@/components/ui/Chevron";
 
 interface PaginationProps {
   currentPage: number;
@@ -19,21 +9,29 @@ interface PaginationProps {
 }
 
 const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
-  const maxVisiblePages = 5;
-  const halfVisible = Math.floor(maxVisiblePages / 2);
+  const MAX_VISIBLE_PAGES = 5;
 
-  let startPage = Math.max(1, currentPage - halfVisible);
-  const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  const { pages, startPage, endPage } = useMemo(() => {
+    const halfVisible = Math.floor(MAX_VISIBLE_PAGES / 2);
+    let start = Math.max(1, currentPage - halfVisible);
+    let end = Math.min(totalPages, start + MAX_VISIBLE_PAGES - 1);
 
-  // BUG: Complex logic, could be simplified
-  if (endPage - startPage + 1 < maxVisiblePages) {
-    startPage = Math.max(1, endPage - maxVisiblePages + 1);
-  }
+    if (end - start + 1 < MAX_VISIBLE_PAGES) {
+      start = Math.max(1, end - MAX_VISIBLE_PAGES + 1);
+    }
 
-  const pages = Array.from(
-    { length: endPage - startPage + 1 },
-    (_, i) => startPage + i
-  );
+    const pageNumbers = Array.from(
+      { length: end - start + 1 },
+      (_, i) => start + i
+    );
+
+    return { pages: pageNumbers, startPage: start, endPage: end };
+  }, [currentPage, totalPages]);
+
+  const showFirstPage = startPage > 1;
+  const showLastPage = endPage < totalPages;
+  const showFirstEllipsis = startPage > 2;
+  const showLastEllipsis = endPage < totalPages - 1;
 
   return (
     <div className="flex items-center justify-center gap-2 mt-8">
@@ -41,13 +39,12 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
         variant="secondary"
         size="icon"
         onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
+        disabled={currentPage <= 1}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <Chevron side="left" className="h-4 w-4" />
       </Button>
 
-      {/* BUG: Complex conditional rendering */}
-      {startPage > 1 && (
+      {showFirstPage && (
         <>
           <Button
             variant="secondary"
@@ -55,7 +52,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
           >
             1
           </Button>
-          {startPage > 2 && <span className="text-muted-foreground">...</span>}
+          {showFirstEllipsis && <span className="text-muted-foreground">...</span>}
         </>
       )}
 
@@ -70,9 +67,9 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
         </Button>
       ))}
 
-      {endPage < totalPages && (
+      {showLastPage && (
         <>
-          {endPage < totalPages - 1 && <span className="text-muted-foreground">...</span>}
+          {showLastEllipsis && <span className="text-muted-foreground">...</span>}
           <Button
             variant="secondary"
             onClick={() => onPageChange(totalPages)}
@@ -86,13 +83,12 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
         variant="secondary"
         size="icon"
         onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
+        disabled={currentPage >= totalPages}
       >
-        <ChevronRight className="h-4 w-4" />
+        <Chevron side="right" className="h-4 w-4" />
       </Button>
     </div>
   );
 };
 
 export default Pagination;
-

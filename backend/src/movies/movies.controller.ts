@@ -1,44 +1,79 @@
-import { Controller, Get, Post, Delete, Param, Query, Body } from '@nestjs/common';
-import { MoviesService } from './movies.service';
-import { MovieDto } from './dto/movie.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Query,
+  Body,
+  HttpException,
+  HttpStatus,
+} from "@nestjs/common";
+import { MoviesService } from "./movies.service";
+import { MovieDto } from "./dto/movie.dto";
+import type {
+  GetMovieByTitleResponse,
+  MessageResponse,
+  GetFavoritesResponse,
+} from "src/movies/types/movies.types";
 
-@Controller('movies')
+@Controller("movies")
 export class MoviesController {
   constructor(private readonly moviesService: MoviesService) {}
 
-  @Get('search')
-  async searchMovies(@Query('q') query: string, @Query('page') page?: string) {
-    // BUG: Not validating query parameter
-    // BUG: Not handling missing query - will pass undefined to service
-    // BUG: If query is empty string, service will make API call with empty search
+  @Get("search")
+  async searchMovies(
+    @Query("q") query: string,
+    @Query("page") page?: string,
+  ): Promise<GetMovieByTitleResponse> {
+    if (!query || !query.trim().length) {
+      throw new HttpException(
+        "Search query is required",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const pageNumber = page ? parseInt(page, 10) : 1;
-    // BUG: No validation that pageNumber is valid (NaN, negative, or 0)
-    // BUG: If page is "abc", parseInt returns NaN and service receives NaN
+
+    if (isNaN(pageNumber) || pageNumber < 1) {
+      throw new HttpException(
+        "Page must be a positive number",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     return await this.moviesService.getMovieByTitle(query, pageNumber);
   }
 
-  @Post('favorites')
-  addToFavorites(@Body() movieToAdd: MovieDto) {
-    // BUG: No validation decorators
-    // BUG: Not checking if movieToAdd is null/undefined
+  @Post("favorites")
+  addToFavorites(@Body() movieToAdd: MovieDto): MessageResponse {
+    if (!movieToAdd) {
+      throw new HttpException("Movie data is required", HttpStatus.BAD_REQUEST);
+    }
+
     return this.moviesService.addToFavorites(movieToAdd);
   }
 
-  @Delete('favorites/:imdbID')
-  removeFromFavorites(@Param('imdbID') imdbID: string) {
-    // BUG: No validation
+  @Delete("favorites/:imdbID")
+  removeFromFavorites(@Param("imdbID") imdbID: string): MessageResponse {
+    if (!imdbID || !imdbID.trim().length) {
+      throw new HttpException("IMDb ID is required", HttpStatus.BAD_REQUEST);
+    }
+
     return this.moviesService.removeFromFavorites(imdbID);
   }
 
-  @Get('favorites/list')
-  getFavorites(@Query('page') page?: string) {
-    // BUG: No error handling if page is invalid
-    // BUG: If page is "0" or negative, service will return wrong results
-    // BUG: If page is "abc", parseInt returns NaN, service receives NaN
+  @Get("favorites/list")
+  getFavorites(@Query("page") page?: string): GetFavoritesResponse {
     const pageNumber = page ? parseInt(page, 10) : 1;
-    // BUG: Not handling case where service throws HttpException for empty favorites
+
+    if (isNaN(pageNumber) || pageNumber < 1) {
+      throw new HttpException(
+        "Page must be a positive number",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     return this.moviesService.getFavorites(pageNumber);
   }
-
 }
-

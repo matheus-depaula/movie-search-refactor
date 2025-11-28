@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 
-export default function Navigation() {
+const Navigation = memo(() => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -13,9 +13,7 @@ export default function Navigation() {
     { href: '/favorites', label: 'My Favorites', icon: '❤️' },
   ];
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
     <nav className="bg-gradient-hero border-b border-border">
@@ -99,5 +97,8 @@ export default function Navigation() {
       </div>
     </nav>
   );
-}
+});
 
+Navigation.displayName = 'Navigation';
+
+export default Navigation;

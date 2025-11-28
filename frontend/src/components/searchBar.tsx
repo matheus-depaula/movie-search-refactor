@@ -1,19 +1,19 @@
 import { useState } from "react";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/Input";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
 }
 
-const SearchBar = ({ onSearch }: SearchBarProps) => {
+export const SearchBar = ({ onSearch }: SearchBarProps) => {
   const [query, setQuery] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // BUG: No validation, empty strings can be submitted
-    if (query) {
-      onSearch(query);
-    }
+
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery) onSearch(trimmedQuery);
   };
 
   return (
@@ -31,6 +31,3 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
     </form>
   );
 };
-
-export default SearchBar;
-
